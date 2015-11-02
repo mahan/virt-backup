@@ -48,8 +48,8 @@ $opts{backupdir} = '/var/lib/libvirt/backup';
 # in the backup dir of the VM, but in some situations, you want to put it elsewhere
 $opts{lockdir} = '';
 # Size of LVM snapshots (which will be used to backup VM with minimum downtime
-# if the VM is backed by LVM). If size is set to 0, virt-backup will assume
-# the volume is thinly provisioned and will create a thin snapshot
+# if the VM is backed by LVM). If the LVM volume is thinly provisionned (thinp)
+# this parameter will be ignored
 $opts{snapsize} = '5G';
 # If we should also dump the VM state (dump the memory, equivalent of virsh save)
 $opts{state} = 0;
@@ -673,8 +673,7 @@ sub usage{
         "dumped in the backup dir. That's why you should use a fast support for the backup dir (fast disks, RAID0 " .
         "or RAID10)\n\n" .
     "\t--snapsize=<snapsize>: The amount of space to use for snapshots. Use the same format as -L option of lvcreate. " .
-        "eg: --snapsize=15G. Default is 5G. If you specify a size of 0, virt-backup will assume the volume is thinly provisioned " .
-        "and will create a thin snapshot\n\n" .
+        "eg: --snapsize=15G. Default is 5G. For thinly provisionned volumes, this will be ignored\n\n" .
     "\t--compress[=[gzip|bzip2|pbzip2|lzop|xz|lzip|plzip]]: On the fly compress the disks images during the dump. If you " .
         "don't specify a compression algo, gzip will be used. For the convert action, the compression uses " .
         "the internal qcow2 compression feature, and so, it ignores the compression format.\n\n" .
@@ -832,8 +831,10 @@ sub create_snapshot{
     $lock =~ s/\//\-/g;
     $lock = $opts{backupdir} . '/' . $lock . '.lock';
     my $cmd = "$opts{lvcreate} -s -n " . $blk . $suffix;
+    my ($pool) = split (/\s+/, `$lvs --noheadings -o pool_lv $blk </dev/null`);
     # passing snapsize = 0 means don't allocate a fixed size, which will try to create a thin snapshot
-    if ($opts{snapsize} ne '0'){
+    # we can also rely on thin detection
+    if ($opts{snapsize} ne '0' || !defined $pool){
       $cmd .= " -L $opts{snapsize}";
     }
     else{

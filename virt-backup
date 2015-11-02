@@ -699,7 +699,7 @@ sub usage{
 sub save_vm_state{
     if ($dom->is_active()){
         print "$vm is running, saving state....\n" if ($opts{debug});
-        # if $libvirt2 is defined, you've passed several connection URI
+        # if $libvirt2 is defined, you've passed several connections URI
         # This means that you're running a dual hypervisor cluster
         # And depending on the one running the current VM
         # $backupdir might not be available
@@ -724,7 +724,7 @@ sub save_vm_state{
 sub restore_vm{
     if (! $dom->is_active()){
         if (-e "$backupdir/$vm.state"){
-            # if $libvirt2 is defined, you've passed several connection URI
+            # if $libvirt2 is defined, you've passed several connections URI
             # This means that you're running a dual hypervisor cluster
             # And depending on the one running the current VM
             # $backupdir might not be available

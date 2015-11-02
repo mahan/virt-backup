@@ -373,7 +373,7 @@ sub prepare_backup{
                 # name and Logical Volume name
                 my $lvm = '';
                 if ($opts{lvm} eq '' and $dev =~ m!^/dev/!){
-                    my (undef,$lv,$vg) = split (/\s+/, `/sbin/lvs --noheadings -o lv_name,vg_name $dev </dev/null`);
+                    my (undef,$lv,$vg) = split (/\s+/, `$opts{lvs} --noheadings -o lv_name,vg_name $dev </dev/null`);
                     $lvm = '/dev/'. $vg . '/' . $lv;
                 }
                 # The backing device can be detected, but can also be overwritten with --lvm=/dev/vg/lv
@@ -831,7 +831,7 @@ sub create_snapshot{
     $lock =~ s/\//\-/g;
     $lock = $opts{backupdir} . '/' . $lock . '.lock';
     my $cmd = "$opts{lvcreate} -s -n " . $blk . $suffix;
-    my ($pool) = split (/\s+/, `$lvs --noheadings -o pool_lv $blk </dev/null`);
+    my ($pool) = split (/\s+/, `$opts{lvs} --noheadings -o pool_lv $blk </dev/null`);
     # passing snapsize = 0 means don't allocate a fixed size, which will try to create a thin snapshot
     # we can also rely on thin detection
     if ($opts{snapsize} ne '0' || !defined $pool){

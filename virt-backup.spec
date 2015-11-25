@@ -1,7 +1,7 @@
 
 Summary: backup script for libvirt managed VM
 Name: virt-backup
-Version: 0.2.10
+Version: 0.2.11
 Release: 1
 Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
@@ -33,8 +33,10 @@ libvirt managed virtual machines with minimal downtime
 %{__rm} -rf $RPM_BUILD_ROOT
 
 %if %{?fedora}%{?rhel} <= 5
-sed -i -e "s|/sbin/lvcreate|/usr/sbin/lvcreate|g" -e "s|/sbin/lvremove|/usr/sbin/lvremove|g" \
-       -e "s|/sbin/lvs|/usr/sbin/lvs|g" virt-backup
+sed -i -e "s|/sbin/lvcreate|/usr/sbin/lvcreate|g" \
+       -e "s|/sbin/lvremove|/usr/sbin/lvremove|g" \
+       -e "s|/sbin/lvs|/usr/sbin/lvs|g" \
+       virt-backup
 %endif
 
 # Install backup script
@@ -60,6 +62,10 @@ sed -i -e "s|/sbin/lvcreate|/usr/sbin/lvcreate|g" -e "s|/sbin/lvremove|/usr/sbin
 %dir %attr(0770, qemu, qemu) %{_localstatedir}/lib/libvirt/backup
 
 %changelog
+* Tue Nov 24 2015 Daniel B. <daniel@firewall-services.com> - 0.2.11-1
+- Detect thin volumes
+- Code/comment cleanup
+
 * Tue Feb 17 2015 Daniel B. <daniel@firewall-services.com> - 0.2.10-1
 - Correctly handle disks list when several VM are backed up in one run
   Patch by Diego Rondini <diego.rondini@kynetics.it>

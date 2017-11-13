@@ -1,7 +1,7 @@
 
 Summary: backup script for libvirt managed VM
 Name: virt-backup
-Version: 0.2.11
+Version: 0.2.12
 Release: 1
 Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
@@ -62,6 +62,9 @@ sed -i -e "s|/sbin/lvcreate|/usr/sbin/lvcreate|g" \
 %dir %attr(0770, qemu, qemu) %{_localstatedir}/lib/libvirt/backup
 
 %changelog
+* Tue Nov 14 2017 Daniel Berteaud <daniel@firewall-services.com> 0.2.12-1
+- new package built with tito
+
 * Tue Nov 24 2015 Daniel B. <daniel@firewall-services.com> - 0.2.11-1
 - Detect thin volumes
 - Code/comment cleanup

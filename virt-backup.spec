@@ -57,7 +57,7 @@ sed -i -e "s|/sbin/lvcreate|/usr/sbin/lvcreate|g" \
 
 %files
 %defattr(-,root,root,-)
-%doc README CHANGELOG.git
+%doc README
 %{_bindir}/*
 %dir %attr(0770, qemu, qemu) %{_localstatedir}/lib/libvirt/backup
 

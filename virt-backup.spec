@@ -1,7 +1,7 @@
 
 Summary: backup script for libvirt managed VM
 Name: virt-backup
-Version: 0.2.13
+Version: 0.2.14
 Release: 1
 Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
@@ -62,6 +62,13 @@ sed -i -e "s|/sbin/lvcreate|/usr/sbin/lvcreate|g" \
 %dir %attr(0770, qemu, qemu) %{_localstatedir}/lib/libvirt/backup
 
 %changelog
+* Mon Jan 08 2018 Daniel Berteaud <daniel@firewall-services.com> 0.2.14-1
+- Add support for dumpcmd With this new option, suggested and coded by Jan
+  Schulz-Hofen <hi@jan.sh>, you can pipe the output of dd to a custom command
+  which will consume the data through stdin. This new option is only valid with
+  the dumpo action, and remove the need for a temporary file (daniel@firewall-
+  services.com)
+
 * Tue Nov 14 2017 Daniel Berteaud <daniel@firewall-services.com> 0.2.13-1
 - Remove now unused CHANGELOG.git (daniel@firewall-services.com)
 

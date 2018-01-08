@@ -4,7 +4,7 @@
 #   Daniel Berteaud <daniel@firewall-services.com>
 #
 # COPYRIGHT
-#   Copyright (C) 2009-2015  Daniel Berteaud
+#   Copyright (C) 2009-2018  Daniel Berteaud
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -44,6 +44,8 @@ our @disks = ();
 $opts{action} = 'dump';
 # Where backups will be stored. This directory must already exists
 $opts{backupdir} = '/var/lib/libvirt/backup';
+# dump cmd can be used to pipe the data to a custom commands, instead of storing it in backupdir
+$opts{dumpcmd} = undef;
 # Lockdir is where locks will be held when backing up a VM. The default is to put the lock
 # in the backup dir of the VM, but in some situations, you want to put it elsewhere
 $opts{lockdir} = '';
@@ -107,6 +109,7 @@ GetOptions(
     "state"              => \$opts{state},
     "snapsize=s"         => \$opts{snapsize},
     "backupdir=s"        => \$opts{backupdir},
+    "dumpcmd=s"          => \$opts{dumpcmd},
     "lockdir=s"          => \$opts{lockdir},
     "lvm=s"              => \$opts{lvm},
     "vm=s"               => \@vms,
@@ -177,6 +180,11 @@ $opts{action} = 'unlock'  if ($opts{unlock});
 # Stop here if we have no vm
 # Or the help flag is present
 if ((!@vms) || ($opts{help})){
+    usage();
+    exit 1;
+}
+# dumpcmd can only be used with the dump action
+if ($opts{dumpcmd} && $opt{action} != 'dump'){
     usage();
     exit 1;
 }
@@ -464,8 +472,13 @@ sub prepare_backup{
         if ($opts{action} eq 'dump'){
             print "\n\nThe following disks will be dumped:\n\n";
             foreach $disk (@disks){
-                print "Source: $disk->{source}\tDest: $backupdir/$vm" . '_' . $disk->{target} .
-                    ".img$opts{compext}\n";
+		if ($opts{dumpcmd}){
+                    print "Source: $disk->{source}\tBackup command: $opts{dumpcmd}\n";
+		}
+		else {
+                    print "Source: $disk->{source}\tDest: $backupdir/$vm" . '_' . $disk->{target} .
+                        ".img$opts{compext}\n";
+                }
             }
         }
         elsif ($opts{action} eq 'convert'){
@@ -530,8 +543,18 @@ sub run_dump{
                 if ($opts{debug} && $opts{compress} ne 'none')
         }
         else {
-            print "\nStarting dump of $source to $dest\n\n" if ($opts{debug});
-            $cmd = "$opts{ionice} dd if=$source bs=$opts{blocksize} | $opts{nice} $opts{compcmd} > $dest 2>/dev/null";
+            if ($opts{dumpcmd}){
+		my $dumpcmd = $opts{dumpcmd};
+                $dumpcmd =~ s/{{VIRT_BACKUP_VM}}/$vm/g;
+                $dumpcmd =~ s/{{VIRT_BACKUP_DISK}}/$disk->{target}/g;
+                print "\nStarting dump of $source to command: $dumpcmd\n\n" if ($opts{debug});
+                $cmd = "$opts{ionice} dd if=$source bs=$opts{blocksize} 2>/dev/null | $opts{nice} $opts{compcmd}";
+                $cmd .= " | $dumpcmd 2>/dev/null";
+            }
+	    else {
+                print "\nStarting dump of $source to $dest\n\n" if ($opts{debug});
+                $cmd = "$opts{ionice} dd if=$source bs=$opts{blocksize} | $opts{nice} $opts{compcmd} > $dest 2>/dev/null";
+            }
         }
         unless( system("$cmd") == 0 ){
             die "Couldn't dump or convert $source to $dest\n";
@@ -661,7 +684,7 @@ sub run_cleanup{
 sub usage{
     print "usage:\n$0 --action=[dump|cleanup|chunkmount|unlock] --vm=vm1[,vm2,vm3] [--debug] [--exclude=hda,hdb] [--compress] ".
         "[--state] [--shutdown] [--shutdown-timeout] [--no-offline] [--no-snapshot] [--snapsize=<size>] [--backupdir=/path/to/dir] [--connect=<URI>] ".
-        "[--keep-lock] [--blocksize=<block size>]\n" .
+        "[--keep-lock] [--blocksize=<block size>] [--dumpcmd=<command>]\n" .
     "\n\n" .
     "\t--action: What action the script will run. Valid actions are\n\n" .
     "\t\t- dump: Run the dump routine (dump disk image to temp dir, pausing the VM if needed). It's the default action\n" .
@@ -699,6 +722,10 @@ sub usage{
         "disk of a VM, but not the data one which can be backed up separatly, at the files level.\n\n" .
     "\t--backupdir=/path/to/backup: Use an alternate backup dir. The directory must exists and be writable. " .
         "The default is /var/lib/libvirt/backup\n\n" .
+    "\t--dumpcmd=<command>: Do not store backup on disk, but redirect the output to a custom command instead. " .
+        "This lets you use your favorite backup script/software accepting backup data on STDIN. The variables " .
+        "{{VIRT_BACKUP_VM}} and {{VIRT_BACKUP_DISK}} will be substituted by the names of the current vm and disk. " .
+        "Disabled by default. Only valid if action is dump\n\n" .
     "\t--lockdir=/path/to/locks: Use an alternate lock dir. The directory must exists and be writable. " .
         "The default is to put locks in the backup diretory, but you might want it elsewhere (on a shared storage for example)\n\n" .
     "\t--connect=<URI>: URI to connect to libvirt daemon (to suspend, resume, save, restore VM etc...). " .

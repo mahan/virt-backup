@@ -545,8 +545,8 @@ sub run_dump{
         else {
             if ($opts{dumpcmd}){
 		my $dumpcmd = $opts{dumpcmd};
-                $dumpcmd =~ s/{{VIRT_BACKUP_VM}}/$vm/g;
-                $dumpcmd =~ s/{{VIRT_BACKUP_DISK}}/$disk->{target}/g;
+                $dumpcmd =~ s/__VIRT_BACKUP_VM__/$vm/g;
+                $dumpcmd =~ s/__VIRT_BACKUP_DISK__/$disk->{target}/g;
                 print "\nStarting dump of $source to command: $dumpcmd\n\n" if ($opts{debug});
                 $cmd = "$opts{ionice} dd if=$source bs=$opts{blocksize} 2>/dev/null | $opts{nice} $opts{compcmd}";
                 $cmd .= " | $dumpcmd 2>/dev/null";
@@ -724,7 +724,7 @@ sub usage{
         "The default is /var/lib/libvirt/backup\n\n" .
     "\t--dumpcmd=<command>: Do not store backup on disk, but redirect the output to a custom command instead. " .
         "This lets you use your favorite backup script/software accepting backup data on STDIN. The variables " .
-        "{{VIRT_BACKUP_VM}} and {{VIRT_BACKUP_DISK}} will be substituted by the names of the current vm and disk. " .
+        "__VIRT_BACKUP_VM__ and __VIRT_BACKUP_DISK__ will be substituted by the names of the current vm and disk. " .
         "Disabled by default. Only valid if action is dump\n\n" .
     "\t--lockdir=/path/to/locks: Use an alternate lock dir. The directory must exists and be writable. " .
         "The default is to put locks in the backup diretory, but you might want it elsewhere (on a shared storage for example)\n\n" .

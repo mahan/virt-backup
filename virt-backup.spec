@@ -1,7 +1,7 @@
 
 Summary: backup script for libvirt managed VM
 Name: virt-backup
-Version: 0.2.14
+Version: 0.2.15
 Release: 1
 Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
@@ -62,6 +62,10 @@ sed -i -e "s|/sbin/lvcreate|/usr/sbin/lvcreate|g" \
 %dir %attr(0770, qemu, qemu) %{_localstatedir}/lib/libvirt/backup
 
 %changelog
+* Sat Jan 27 2018 Daniel Berteaud <daniel@firewall-services.com> 0.2.15-1
+- Don't use double bracket for variable substitution, but double underscores
+  (daniel@firewall-services.com)
+
 * Mon Jan 08 2018 Daniel Berteaud <daniel@firewall-services.com> 0.2.14-1
 - Add support for dumpcmd With this new option, suggested and coded by Jan
   Schulz-Hofen <hi@jan.sh>, you can pipe the output of dd to a custom command

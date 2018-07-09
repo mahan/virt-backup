@@ -184,7 +184,7 @@ if ((!@vms) || ($opts{help})){
     exit 1;
 }
 # dumpcmd can only be used with the dump action
-if ($opts{dumpcmd} && $opt{action} != 'dump'){
+if ($opts{dumpcmd} && $opts{action} != 'dump'){
     usage();
     exit 1;
 }

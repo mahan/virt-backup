@@ -634,8 +634,8 @@ sub run_cleanup{
             );
             rmdir $mp || die $!;
         }
-        # Just wait 2 seconds to be sure all fuse resources has been released
-        sleep(2);
+        # Just wait a few seconds to be sure all fuse resources has been released
+        sleep(10);
         # Now, standard filesystems
         foreach (@mounts){
             my @info = split(/\s+/, $_);
@@ -652,7 +652,7 @@ sub run_cleanup{
     }
 
     if (open SNAPLIST, "<$backupdir.meta/snapshots"){
-        sleep(1);
+        sleep(2);
         foreach (<SNAPLIST>){
             # Destroy snapshot listed here is they exists
             # and only if the end with _ and 10 digits

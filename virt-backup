@@ -28,6 +28,7 @@ use Sys::Virt;
 use Getopt::Long;
 use File::Copy;
 use File::Spec;
+use LockFile::Simple;
 
 # Set umask
 umask(022);
@@ -230,7 +231,16 @@ if (defined $connect[1]){
 our $libvirt = $libvirt1;
 
 print "\n" if ($opts{debug});
- 
+
+# Acquire an exclusive lock so we can ensure only one copy
+# of virt-backup can run at a time
+my $locker = LockFile::Simple->make(
+  -max   => 20,
+  -delay => 1
+);
+print "Trying to acquire an exclusive lock\n" if ($opts{debug});
+die "Can't acquire exclusive lock" unless $locker->lock($opts{lockdir} . '/virt-backup');
+
 foreach our $vm (@vms){
     # Create a new object representing the VM
     print "Checking $vm status\n\n" if ($opts{debug});
@@ -280,6 +290,9 @@ foreach our $vm (@vms){
     }
 }
 
+print "Releasing exclusive lock\n" if ($opts{debug});
+$locker->unlock($opts{lockdir} . "/virt-backup");
+exit 0;
 
 ############################################################################
 ##############                FUNCTIONS                 ####################

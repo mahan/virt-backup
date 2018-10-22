@@ -47,9 +47,10 @@ Keep the lock file present after the dump
 virt-backup --dump --vm=devsrv --snapsize=10G --keep-lock
 
 
-Backup devsrv, and disable LVM snapshots
+Backup devsrv, and disable LVM snapshots. Also fails if
+there's already 2 backups running
 
-virt-backup --dump --vm=devsrv --no-snapshot
+virt-backup --dump --max-backups=2 --vm=devsrv --no-snapshot
 
 
 Backup mail01, and enable debug (verbose output)

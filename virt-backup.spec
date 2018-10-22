@@ -15,6 +15,7 @@ Requires: util-linux
 Requires: lzop, bzip2, gzip, xz
 Requires: perl(Sys::Virt) => 0.2.3
 Requires: perl(XML::Simple)
+Requires: perl(LockFile::Simple)
 Requires: fuse-chunkfs
 
 AutoReq: no

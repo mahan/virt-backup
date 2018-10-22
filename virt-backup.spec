@@ -1,7 +1,7 @@
 
 Summary: backup script for libvirt managed VM
 Name: virt-backup
-Version: 0.2.17
+Version: 0.2.18
 Release: 1
 Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
@@ -62,6 +62,10 @@ sed -i -e "s|/sbin/lvcreate|/usr/sbin/lvcreate|g" \
 %dir %attr(0770, qemu, qemu) %{_localstatedir}/lib/libvirt/backup
 
 %changelog
+* Mon Oct 22 2018 Daniel Berteaud <daniel@firewall-services.com> 0.2.18-1
+- Add a max-backups param, to limit the numer of backups running at a time GLPI
+  #33827 (daniel@firewall-services.com)
+
 * Thu Jul 26 2018 Daniel Berteaud <daniel@firewall-services.com> 0.2.17-1
 - Wait longer after chunkfs umount Or snapshot deletion might fail
   (daniel@firewall-services.com)

@@ -48,7 +48,7 @@ $opts{backupdir} = '/var/lib/libvirt/backup';
 $opts{dumpcmd} = undef;
 # Lockdir is where locks will be held when backing up a VM. The default is to put the lock
 # in the backup dir of the VM, but in some situations, you want to put it elsewhere
-$opts{lockdir} = '';
+$opts{lockdir} = $opts{backupdir};
 # Size of LVM snapshots (which will be used to backup VM with minimum downtime
 # if the VM is backed by LVM). If the LVM volume is thinly provisionned (thinp)
 # this parameter will be ignored
@@ -96,7 +96,8 @@ $opts{ionice} = 'ionice -c 2 -n 7';
 # and wait for shutdowntimeout seconds for the guest to be off
 $opts{shutdown} = 0;
 $opts{shutdowntimeout} = 300;
-
+# Limit the number of concurrent backup running. Default is no limit
+$opts{maxbackups} = 0;
 
 # Those are internal variables, do not modify
 $opts{livebackup} = 1;
@@ -125,6 +126,7 @@ GetOptions(
     "blocksize=s"        => \$opts{blocksize},
     "shutdown"           => \$opts{shutdown},
     "shutdown-timeout=s" => \$opts{shutdowntimeout},
+    "max-backups=i"      => \$opts{maxbackups},
     "help"               => \$opts{help}
 );
 
@@ -208,7 +210,7 @@ if (! -d $opts{backupdir} ){
 }
 
 # Lockdir, if defined, must also exist
-if ($opts{lockdir} ne '' && !-d $opts{lockdir}){
+if (!-d $opts{lockdir}){
     print "$opts{lockdir} doesn't exist\n";
     exit 1;
 }
@@ -249,7 +251,6 @@ foreach our $vm (@vms){
         }
     }
     our $backupdir = $opts{backupdir} . '/' . $vm;
-    our $lockdir   = ($opts{lockdir} eq '') ? "$backupdir.meta" : $opts{lockdir};
     our $time      = "_".time();
     if ($opts{action} eq 'cleanup'){
         print "Running cleanup routine for $vm\n\n" if ($opts{debug});
@@ -293,7 +294,12 @@ sub prepare_backup{
     my $data = $xml->XMLin( $dom->get_xml_description(), forcearray => ['disk'] );
 
     # Stop here if the lock file is present, another dump might be running
-    die "Another backup is running\n" if ( -e "$lockdir/$vm.lock" );
+    die "Another backup is running\n" if ( -e "$opts{lockdir}/$vm.lock" );
+
+    my @running = glob "$opts{lockdir}/*.lock";
+
+    die "Already $opts{maxbackups} backup running. Can't start another one\n"
+      if ($opts{maxbackups} gt 0 && scalar @running ge $opts{maxbackups});
 
     # Reset disks list
     @disks = ();
@@ -736,7 +742,9 @@ sub usage{
         "You should make sure your guest react to ACPI signals. This flag is mutual exclusive with --state\n\n" .
     "\t--shutdown-timeout=<seconds>: How long to wait, in seconds, for the vm to shutdown. If the VM isn't stopped " .
         "after that amount of time (in seconds), the backup will abort. The default timeout is 300 seconds\n\n" .
-    "\t--blocksize=<blocksize>: Specify block size in bytes (for dd and chunkfs). Default to 262144 (256kB).\n";
+    "\t--blocksize=<blocksize>: Specify block size in bytes (for dd and chunkfs). Default to 262144 (256kB).\n" .
+    "\t--max-backups=<number>: Specify the max number of backups running at a time. The script fails if the limit " .
+       "is reached, to prevent overloading the system\n";
 }
 
 # Save a running VM, if it's running
@@ -930,7 +938,7 @@ sub destroy_snapshot{
 # Just creates an empty lock file
 sub lock_vm{
     print "Locking $vm\n" if $opts{debug};
-    open ( LOCK, ">$lockdir/$vm.lock" ) || die $!;
+    open ( LOCK, ">$opts{lockdir}/$vm.lock" ) || die $!;
     print LOCK "";
     close LOCK;
 }
@@ -939,6 +947,6 @@ sub lock_vm{
 # Just removes the lock file
 sub unlock_vm{
     print "Removing lock file for $vm\n\n" if $opts{debug};
-    unlink <$lockdir/$vm.lock>;
+    unlink <$opts{lockdir}/$vm.lock>;
 }
 

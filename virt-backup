@@ -235,7 +235,7 @@ print "\n" if ($opts{debug});
 # Acquire an exclusive lock so we can ensure only one copy
 # of virt-backup can run at a time
 my $locker = LockFile::Simple->make(
-  -max   => 20,
+  -max   => 180,
   -delay => 1
 );
 print "Trying to acquire an exclusive lock\n" if ($opts{debug});

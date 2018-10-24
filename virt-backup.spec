@@ -1,7 +1,7 @@
 
 Summary: backup script for libvirt managed VM
 Name: virt-backup
-Version: 0.2.19
+Version: 0.2.20
 Release: 1
 Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
@@ -63,6 +63,10 @@ sed -i -e "s|/sbin/lvcreate|/usr/sbin/lvcreate|g" \
 %dir %attr(0770, qemu, qemu) %{_localstatedir}/lib/libvirt/backup
 
 %changelog
+* Wed Oct 24 2018 Daniel Berteaud <daniel@firewall-services.com> 0.2.20-1
+- Timeout for global exclusive lock after 180 sec (instead of 20)
+  (daniel@firewall-services.com)
+
 * Mon Oct 22 2018 Daniel Berteaud <daniel@firewall-services.com> 0.2.19-1
 - Add an exclusive lock to be sure we correctly count the number of running
   backups This also ensure only one LVM snapshot is created at a time, which is

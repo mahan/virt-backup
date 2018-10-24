@@ -234,12 +234,20 @@ print "\n" if ($opts{debug});
 
 # Acquire an exclusive lock so we can ensure only one copy
 # of virt-backup can run at a time
-my $locker = LockFile::Simple->make(
-  -max   => 180,
-  -delay => 1
-);
 print "Trying to acquire an exclusive lock\n" if ($opts{debug});
-die "Can't acquire exclusive lock" unless $locker->lock($opts{lockdir} . '/virt-backup');
+
+my $locker = LockFile::Simple->make(
+  -max       => 180,
+  -delay     => 1,
+  -autoclean => 1,
+  -ext       => 'lck',
+  -hold      => 60
+);
+my $glock = undef;
+if ($opts{action} =~ m/^dump|convert|chunkmount$/){
+    print "Trying to acquire an exclusive lock\n" if ($opts{debug});
+    my $glock = $locker->lock($opts{lockdir} . '/virt-backup') || die "Can't acquire exclusive lock\n";
+}
 
 foreach our $vm (@vms){
     # Create a new object representing the VM
@@ -290,8 +298,10 @@ foreach our $vm (@vms){
     }
 }
 
-print "Releasing exclusive lock\n" if ($opts{debug});
-$locker->unlock($opts{lockdir} . "/virt-backup");
+if ($glock){
+  print "Releasing exclusive lock\n" if ($opts{debug});
+  $glock->release;
+}
 exit 0;
 
 ############################################################################

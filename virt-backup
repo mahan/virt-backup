@@ -410,33 +410,33 @@ sub prepare_backup{
             }
             # If the disk is a file
             elsif ($disk->{type} eq 'file'){
-                # Try to find the mount point, and the backing device
-                my @df = `df -PT $source`;
-                my ($dev, undef, undef, undef, undef, undef, $mount) = split /\s+/, $df[1];
-                # Ok, we now have the backing device which probably looks like /dev/mapper/vg-lv
-                # We cannot pass this arg to lvcreate to take a snapshot, we need to detect Volume Group
-                # name and Logical Volume name
-                my $lvm = '';
-                if ($opts{lvm} eq '' and $dev =~ m!^/dev/!){
-                    my (undef, $lv, $vg) = split (/\s+/, `$opts{lvs} --noheadings -o lv_name,vg_name $dev </dev/null`);
-                    $lvm = '/dev/'. $vg . '/' . $lv;
-                }
-                # The backing device can be detected, but can also be overwritten with --lvm=/dev/vg/lv
-                # This can be usefull for example when you use GlusterFS. Df will return something like
-                # localhost:/vmstore as the device, but this GlusterFS volume might be backed by an LVM
-                # volume, in which case, you can pass it as an argument to the script
-                elsif ($opts{lvm} ne '' && -e "$opts{lvm}"){
-                    $lvm = $opts{lvm};
-                }
-                else{
-                    die "Couldn't detect the backing device for $source. You should pass it as argument like --lvm=/dev/vg/lv\n\n";
-                }
-                my $mp   = $lvm;
-                $mp      =~ s!/!_!g;
-                $mp      = "$backupdir.mount/$mp/";
                 my $file = $source;
                 # Try to snapshot this device
                 if ( $opts{snapshot} ){
+                    # Try to find the mount point, and the backing device
+                    my @df = `df -PT $source`;
+                    my ($dev, undef, undef, undef, undef, undef, $mount) = split /\s+/, $df[1];
+                    # Ok, we now have the backing device which probably looks like /dev/mapper/vg-lv
+                    # We cannot pass this arg to lvcreate to take a snapshot, we need to detect Volume Group
+                    # name and Logical Volume name
+                    my $lvm = '';
+                    if ($opts{lvm} eq '' and $dev =~ m!^/dev/!){
+                        my (undef, $lv, $vg) = split (/\s+/, `$opts{lvs} --noheadings -o lv_name,vg_name $dev </dev/null`);
+                        $lvm = '/dev/'. $vg . '/' . $lv;
+                    }
+                    # The backing device can be detected, but can also be overwritten with --lvm=/dev/vg/lv
+                    # This can be usefull for example when you use GlusterFS. Df will return something like
+                    # localhost:/vmstore as the device, but this GlusterFS volume might be backed by an LVM
+                    # volume, in which case, you can pass it as an argument to the script
+                    elsif ($opts{lvm} ne '' && -e "$opts{lvm}"){
+                        $lvm = $opts{lvm};
+                    }
+                    else{
+                        die "Couldn't detect the backing device for $source. You should pass it as argument like --lvm=/dev/vg/lv\n\n";
+                    }
+                    my $mp   = $lvm;
+                    $mp      =~ s|/|_|g;
+                    $mp      = "$backupdir.mount/$mp/";
                     # Maybe the LVM is already snapshoted and mounted for a previous disk ?
                     my $is_mounted = 0;
                     if (open MOUNT, "<$backupdir.meta/mount"){

@@ -203,6 +203,7 @@ if (!$opts{offline} && !$opts{snapshot}){
 }
 
 # Makes sur backupdir is an absolute path
+print "\n\nBackup dir $opts{backupdir}\n" if ($opts{debug});
 $opts{backupdir} = File::Spec->rel2abs($opts{backupdir}, '/');
 # Backup dir needs to be created first 
 if (! -d $opts{backupdir} ){
@@ -531,15 +532,18 @@ sub prepare_backup{
     if ($opts{livebackup}){
         print "\nWe can run a live backup\n" if ($opts{debug});
         if ($opts{wasrunning}){
+	    print "\n1.0\n" if ($opts{debug});
             if ($opts{state}){
                 # Prevent a race condition in libvirt
                 sleep(1);
                 restore_vm();
             }
             elsif ($opts{shutdown}){
+		print "\n1.1\n" if ($opts{debug});
                 start_vm();
             }
             else{
+		print "\n1.2\n" if ($opts{debug});
                 resume_vm();
             }
         }
@@ -595,10 +599,17 @@ sub run_dump{
 
     # If the VM was running before the dump, restore (or resume) it
     if ($opts{wasrunning}){
+	print "\n2.0\n" if ($opts{debug});
         if ($opts{state}){
+	    print "\n2.1\n" if ($opts{debug});
             restore_vm();
         }
+        elsif ($opts{shutdown}){
+	    print "\n2.1.5\n" if ($opts{debug});
+            start_vm();
+        }
         else{
+	    print "\n2.2\n" if ($opts{debug});
             resume_vm();
         }
     }
@@ -641,11 +652,14 @@ sub run_cleanup{
     my $snap = 0;
 
     # If a state file is present, restore the VM
+    print "\n3.0\n" if ($opts{debug});
     if (-e "$backupdir/$vm.state"){
+	print "\n3.1\n" if ($opts{debug});
         restore_vm();
     }
     # Else, try to resume it
     else{
+	print "\n3.2\n" if ($opts{debug});
         resume_vm();
     }
 
